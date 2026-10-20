@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Mis Cuentas">
+<title>Mis Cuentas</title>
+<style>
+:root{
+  --bg:#f4f6f5; --card:#ffffff; --text:#14201d; --muted:#5f6f6a; --line:#e2e8e5;
+  --accent:#0f766e; --accent-soft:#d9f0ec; --danger:#c2410c; --danger-soft:#fdeadf;
+  --ok:#15803d; --ok-soft:#dcf3e2; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0e1413; --card:#172120; --text:#e8efed; --muted:#93a39e; --line:#26332f;
+    --accent:#2dd4bf; --accent-soft:#123a35; --danger:#fb923c; --danger-soft:#3a2216;
+    --ok:#4ade80; --ok-soft:#14321f; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh}
+.wrap{max-width:560px;margin:0 auto;padding:16px 16px calc(96px + env(safe-area-inset-bottom))}
+h1,h2,h3{margin:0;font-weight:650;letter-spacing:-.01em}
+button{font:inherit;cursor:pointer;border:0;border-radius:12px;padding:12px 16px;background:var(--accent);color:#fff;font-weight:600}
+@media (prefers-color-scheme: dark){button{color:#06201c}}
+button.ghost{background:transparent;color:var(--accent);padding:8px 10px}
+button.soft{background:var(--accent-soft);color:var(--accent)}
+button.danger{background:var(--danger-soft);color:var(--danger)}
+button.small{padding:6px 10px;font-size:14px;border-radius:9px}
+button:disabled{opacity:.5}
+input,select,textarea{font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight:550}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-bottom:14px}
+.row{display:flex;gap:10px;align-items:center}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{margin-bottom:12px}
+.muted{color:var(--muted)}
+.big{font-size:40px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+.num{font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+.neg{color:var(--danger)} .pos{color:var(--ok)}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;margin:14px 0 12px}
+.bar>i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .3s}
+.bar.over>i{background:var(--danger)}
+.stats{display:flex;justify-content:space-between;gap:10px;font-size:14px}
+.top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
+.monthnav{display:flex;align-items:center;gap:4px;margin-bottom:14px;justify-content:center}
+.monthnav h2{min-width:170px;text-align:center;text-transform:capitalize;font-size:19px}
+.monthnav button{width:42px;height:42px;padding:0;font-size:20px}
+.list{list-style:none;margin:0;padding:0}
+.item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0}
+.item .main{flex:1;min-width:0}
+.item .t{font-weight:600;overflow-wrap:anywhere}
+.item .s{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.item .actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.tag{display:inline-block;font-size:12px;background:var(--accent-soft);color:var(--accent);padding:2px 8px;border-radius:99px;margin-right:6px}
+.empty{text-align:center;color:var(--muted);padding:18px 0 6px;font-size:15px}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;padding:8px 8px calc(8px + env(safe-area-inset-bottom));z-index:5}
+.tabs button{flex:1;background:transparent;color:var(--muted);padding:10px;font-weight:600}
+.tabs button.on{color:var(--accent);background:var(--accent-soft)}
+.lock{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px}
+.lock .card{width:100%;max-width:400px;padding:26px}
+.lock h1{font-size:26px;margin-bottom:6px}
+.err{color:var(--danger);font-size:14px;min-height:20px;margin:4px 0 8px}
+.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding:16px}
+.modal .card{width:100%;max-width:480px;margin:0}
+@media (min-width:600px){.modal{align-items:center}}
+.menu button{width:100%;text-align:left;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
+details summary{cursor:pointer;color:var(--muted);font-weight:600;padding:6px 0}
+.paid .t,.paid .num{text-decoration:line-through;opacity:.6}
+</style>
+</head>
+<body>
+
+<!-- Pantalla de bloqueo -->
+<div id="lockView" class="lock">
+  <div class="card">
+    <h1>Mis Cuentas</h1>
+    <p class="muted" id="lockMsg" style="margin:0 0 18px"></p>
+    <form id="lockForm" autocomplete="off">
+      <div class="field"><label for="pw1">Contraseña</label><input id="pw1" type="password" autocomplete="current-password" required></div>
+      <div class="field hidden" id="pw2wrap"><label for="pw2">Repite la contraseña</label><input id="pw2" type="password" autocomplete="new-password"></div>
+      <div class="err" id="lockErr"></div>
+      <button type="submit" style="width:100%" id="lockBtn">Entrar</button>
+    </form>
+    <button class="ghost" id="restoreBtn" style="width:100%;margin-top:10px">Restaurar desde una copia</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appView" class="hidden">
+  <div class="wrap">
+    <div class="top">
+      <h1 style="font-size:22px">Mis Cuentas</h1>
+      <div class="row">
+        <button class="ghost" id="menuBtn" aria-label="Menú">Opciones</button>
+        <button class="soft small" id="lockNow">Bloquear</button>
+      </div>
+    </div>
+
+    <!-- Pestaña Mes -->
+    <section id="tabMes">
+      <div class="monthnav">
+        <button class="soft" id="prevM" aria-label="Mes anterior">‹</button>
+        <h2 id="monthTitle"></h2>
+        <button class="soft" id="nextM" aria-label="Mes siguiente">›</button>
+      </div>
+
+      <div class="card">
+        <div class="muted" style="font-size:14px">Saldo disponible</div>
+        <div class="big" id="saldo"></div>
+        <div class="bar" id="bar"><i id="barFill"></i></div>
+        <div class="stats">
+          <div><div class="muted">Nómina</div><div class="num" id="nominaTxt"></div></div>
+          <div style="text-align:right"><div class="muted">Gastado</div><div class="num" id="gastadoTxt"></div></div>
+        </div>
+        <form id="nominaForm" class="row" style="margin-top:14px">
+          <input id="nominaIn" inputmode="decimal" placeholder="Nómina del mes (€)">
+          <button type="submit">Guardar</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Añadir gasto</h3>
+        <form id="gastoForm" autocomplete="off">
+          <div class="field"><label for="gConcepto">Concepto</label><input id="gConcepto" required placeholder="Ej. Supermercado"></div>
+          <div class="grid2">
+            <div class="field"><label for="gImporte">Importe (€)</label><input id="gImporte" inputmode="decimal" required placeholder="0,00"></div>
+            <div class="field"><label for="gFecha">Fecha</label><input id="gFecha" type="date" required></div>
+          </div>
+          <div class="field"><label for="gCat">Categoría</label>
+            <select id="gCat">
+              <option>Casa</option><option>Comida</option><option>Facturas</option><option>Transporte</option>
+              <option>Ocio</option><option>Salud</option><option>Compras</option><option>Otros</option>
+            </select>
+          </div>
+          <button type="submit" style="width:100%">Añadir gasto</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Gastos del mes</h3>
+        <ul class="list" id="gastosList" style="margin-top:6px"></ul>
+      </div>
+    </section>
+
+    <!-- Pestaña Me deben -->
+    <section id="tabDeben" class="hidden">
+      <div class="card">
+        <div class="muted" style="font-size:14px">Total que te deben</div>
+        <div class="big pos" id="totalDeben"></div>
+        <div class="muted" style="font-size:14px;margin-top:4px" id="numDeben"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Añadir deuda</h3>
+        <form id="deudaForm" autocomplete="off">
+          <div class="grid2">
+            <div class="field"><label for="dNombre">Nombre</label><input id="dNombre" required placeholder="¿Quién?"></div>
+            <div class="field"><label for="dImporte">Cantidad (€)</label><input id="dImporte" inputmode="decimal" required placeholder="0,00"></div>
+          </div>
+          <div class="field"><label for="dDesc">Descripción</label><textarea id="dDesc" rows="2" placeholder="Ej. Cena del sábado"></textarea></div>
+          <button type="submit" style="width:100%">Añadir</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Pendientes</h3>
+        <ul class="list" id="debenList" style="margin-top:6px"></ul>
+        <details id="cobradasWrap" style="margin-top:10px">
+          <summary id="cobradasSum">Cobradas</summary>
+          <ul class="list" id="cobradasList"></ul>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <nav class="tabs">
+    <button id="tMes" class="on">Cuentas del mes</button>
+    <button id="tDeben">Me deben</button>
+  </nav>
+</div>
+
+<!-- Modales -->
+<div id="modal" class="modal hidden"><div class="card" id="modalCard"></div></div>
+<input type="file" id="fileIn" accept=".json,application/json" class="hidden">
+<div id="toast" class="toast hidden"></div>
+
+<script>
+(() => {
+'use strict';
+const STORE = 'miscuentas.v1';
+const ITER = 250000;
+const enc = new TextEncoder(), dec = new TextDecoder();
+const $ = id => document.getElementById(id);
+
+let key = null, salt = null, state = null;
+let cur = monthKey(new Date());
+let pendingImport = null;
+let hiddenAt = 0;
+
+/* ---------- utilidades ---------- */
+function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
+function todayISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+const eur = new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'});
+const money = n => eur.format(Math.round(n*100)/100);
+function parseMoney(s){
+  s = String(s||'').trim().replace(/\s|€/g,'');
+  if (s.includes(',') && s.includes('.')) s = s.replace(/\./g,'').replace(',', '.');
+  else s = s.replace(',', '.');
+  const n = Number(s);
+  return isFinite(n) ? Math.round(n*100)/100 : NaN;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return d+'/'+m+'/'+y; }
+function toast(msg){ const t=$('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.add('hidden'),2600); }
+
+function b64(buf){ const b=new Uint8Array(buf); let s=''; for(let i=0;i<b.length;i+=0x8000) s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000)); return btoa(s); }
+function unb64(s){ const bin=atob(s); const u=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i); return u; }
+
+/* ---------- cifrado ---------- */
+async function deriveKey(pass, s){
+  const base = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt:s, iterations:ITER, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']);
+}
+async function encryptState(){
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(JSON.stringify(state)));
+  return {app:'miscuentas', v:1, salt:b64(salt), iv:b64(iv), data:b64(ct)};
+}
+async function decryptBlob(blob, pass){
+  const s = unb64(blob.salt);
+  const k = await deriveKey(pass, s);
+  const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(blob.iv)}, k, unb64(blob.data));
+  return {st: JSON.parse(dec.decode(pt)), k, s};
+}
+function readStored(){ try { const r = localStorage.getItem(STORE); return r ? JSON.parse(r) : null; } catch(e){ return null; } }
+async function save(){
+  try { localStorage.setItem(STORE, JSON.stringify(await encryptState())); }
+  catch(e){ toast('No se pudo guardar en este navegador. Haz una copia desde Opciones.'); }
+}
+function normalize(st){
+  st = st && typeof st==='object' ? st : {};
+  st.months = st.months || {};
+  st.deudas = Array.isArray(st.deudas) ? st.deudas : [];
+  return st;
+}
+
+/* ---------- bloqueo ---------- */
+function showLock(){
+  key = null; state = null;
+  $('appView').classList.add('hidden'); $('lockView').classList.remove('hidden');
+  closeModal();
+  const stored = readStored();
+  const creating = !stored && !pendingImport;
+  $('pw2wrap').classList.toggle('hidden', !creating);
+  $('pw2').required = creating;
+  $('pw1').autocomplete = creating ? 'new-password' : 'current-password';
+  $('lockMsg').textContent = pendingImport ? 'Introduce la contraseña con la que se hizo la copia.'
+    : creating ? 'Crea una contraseña. Tus datos se guardan cifrados solo en este dispositivo. Si la olvidas no se pueden recuperar.'
+    : 'Introduce tu contraseña para abrir tus cuentas.';
+  $('lockBtn').textContent = creating ? 'Crear y entrar' : 'Entrar';
+  $('restoreBtn').classList.toggle('hidden', !!pendingImport);
+  $('pw1').value=''; $('pw2').value=''; $('lockErr').textContent='';
+  setTimeout(()=>$('pw1').focus(), 50);
+}
+$('lockForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const p1 = $('pw1').value, p2 = $('pw2').value;
+  const err = $('lockErr'); err.textContent='';
+  if (!window.crypto || !crypto.subtle){ err.textContent='Este navegador no permite el cifrado. Ábrelo desde una dirección https.'; return; }
+  $('lockBtn').disabled = true;
+  try {
+    const blob = pendingImport || readStored();
+    if (!blob){
+      if (p1.length < 4){ err.textContent='Usa al menos 4 caracteres.'; return; }
+      if (p1 !== p2){ err.textContent='Las contraseñas no coinciden.'; return; }
+      salt = crypto.getRandomValues(new Uint8Array(16));
+      key = await deriveKey(p1, salt);
+      state = normalize({});
+      await save();
+    } else {
+      try { const r = await decryptBlob(blob, p1); state = normalize(r.st); key = r.k; salt = r.s; }
+      catch(_){ err.textContent='Contraseña incorrecta.'; return; }
+      if (pendingImport){ pendingImport = null; await save(); toast('Copia restaurada'); }
+    }
+    $('lockView').classList.add('hidden'); $('appView').classList.remove('hidden');
+    render();
+  } finally { $('lockBtn').disabled = false; }
+});
+$('restoreBtn').addEventListener('click', ()=>$('fileIn').click());
+$('lockNow').addEventListener('click', showLock);
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden) hiddenAt = Date.now();
+  else if (key && hiddenAt && Date.now()-hiddenAt > 3*60*1000) showLock(); // se bloquea tras 3 min en segundo plano
+});
+
+/* ---------- copias ---------- */
+$('fileIn').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value='';
+  if (!f) return;
+  try {
+    const blob = JSON.parse(await f.text());
+    if (blob.app!=='miscuentas' || !blob.data) throw 0;
+    if (key && !confirm('Esto sustituirá los datos de este dispositivo por los de la copia. ¿Continuar?')) return;
+    pendingImport = blob; showLock();
+  } catch(_){ toast('Ese archivo no es una copia válida de Mis Cuentas'); }
+});
+async function exportBackup(){
+  const blob = await encryptState();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(blob)], {type:'application/json'}));
+  a.download = 'mis-cuentas-copia-' + todayISO() + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  toast('Copia descargada (va cifrada con tu contraseña)');
+}
+
+/* ---------- modales ---------- */
+function openModal(html){ $('modalCard').innerHTML = html; $('modal').classList.remove('hidden'); }
+function closeModal(){ $('modal').classList.add('hidden'); $('modalCard').innerHTML=''; }
+$('modal').addEventListener('click', e => { if (e.target.id==='modal') closeModal(); });
+
+$('menuBtn').addEventListener('click', () => {
+  openModal(`<h3 style="margin-bottom:14px">Opciones</h3>
+    <div class="menu">
+      <button class="soft" data-a="exp">Descargar copia de seguridad</button>
+      <button class="soft" data-a="imp">Restaurar desde una copia</button>
+      <button class="soft" data-a="pw">Cambiar contraseña</button>
+      <button class="danger" data-a="wipe">Borrar todos los datos de este dispositivo</button>
+      <button class="ghost" data-a="x" style="text-align:center">Cerrar</button>
+    </div>
+    <p class="muted" style="font-size:13px;margin:6px 0 0">Los datos solo están en este navegador. Para pasarlos al móvil u otro dispositivo, descarga una copia aquí y restáurala allí.</p>`);
+  $('modalCard').querySelectorAll('[data-a]').forEach(b => b.onclick = () => {
+    const a = b.dataset.a;
+    if (a==='exp'){ closeModal(); exportBackup(); }
+    else if (a==='imp'){ closeModal(); $('fileIn').click(); }
+    else if (a==='pw') changePw();
+    else if (a==='wipe'){
+      if (confirm('¿Borrar TODOS tus datos de este dispositivo? No se puede deshacer.') && confirm('¿Seguro? Si no tienes copia, se perderán.')){
+        try{ localStorage.removeItem(STORE); }catch(_){}
+        showLock();
+      }
+    } else closeModal();
+  });
+});
+function changePw(){
+  openModal(`<h3 style="margin-bottom:14px">Cambiar contraseña</h3>
+    <form id="pwForm">
+      <div class="field"><label>Contraseña actual</label><input type="password" id="pwOld" required></div>
+      <div class="field"><label>Nueva contraseña</label><input type="password" id="pwNew" required></div>
+      <div class="field"><label>Repite la nueva</label><input type="password" id="pwNew2" required></div>
+      <div class="err" id="pwErr"></div>
+      <div class="row"><button type="button" class="ghost" id="pwCancel">Cancelar</button><button type="submit" style="flex:1">Cambiar</button></div>
+    </form>`);
+  $('pwCancel').onclick = closeModal;
+  $('pwForm').onsubmit = async e => {
+    e.preventDefault();
+    const o=$('pwOld').value, n=$('pwNew').value, n2=$('pwNew2').value;
+    try { await decryptBlob(readStored() || await encryptState(), o); } catch(_){ $('pwErr').textContent='La contraseña actual no es correcta.'; return; }
+    if (n.length<4){ $('pwErr').textContent='Usa al menos 4 caracteres.'; return; }
+    if (n!==n2){ $('pwErr').textContent='Las contraseñas nuevas no coinciden.'; return; }
+    salt = crypto.getRandomValues(new Uint8Array(16));
+    key = await deriveKey(n, salt);
+    await save(); closeModal(); toast('Contraseña cambiada');
+  };
+}
+
+/* ---------- pestañas ---------- */
+function tab(which){
+  $('tabMes').classList.toggle('hidden', which!=='mes');
+  $('tabDeben').classList.toggle('hidden', which!=='deben');
+  $('tMes').classList.toggle('on', which==='mes');
+  $('tDeben').classList.toggle('on', which==='deben');
+  window.scrollTo(0,0);
+}
+$('tMes').onclick = () => tab('mes');
+$('tDeben').onclick = () => tab('deben');
+
+/* ---------- mes ---------- */
+function month(){ if (!state.months[cur]) state.months[cur] = {nomina:0, gastos:[]}; return state.months[cur]; }
+function shiftMonth(delta){
+  const [y,m] = cur.split('-').map(Number);
+  cur = monthKey(new Date(y, m-1+delta, 1));
+  render();
+}
+$('prevM').onclick = () => shiftMonth(-1);
+$('nextM').onclick = () => shiftMonth(1);
+
+function defaultDate(){ return cur===monthKey(new Date()) ? todayISO() : cur+'-01'; }
+
+$('nominaForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const n = parseMoney($('nominaIn').value);
+  if (isNaN(n) || n<0){ toast('Escribe una cantidad válida'); return; }
+  month().nomina = n; $('nominaIn').value='';
+  await save(); render(); toast('Nómina guardada');
+});
+$('gastoForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const imp = parseMoney($('gImporte').value);
+  if (isNaN(imp) || imp<=0){ toast('Escribe un importe válido'); return; }
+  const fecha = $('gFecha').value || defaultDate();
+  const mk = fecha.slice(0,7);
+  if (!state.months[mk]) state.months[mk] = {nomina:0, gastos:[]};
+  state.months[mk].gastos.push({id:uid(), concepto:$('gConcepto').value.trim(), importe:imp, fecha, cat:$('gCat').value});
+  $('gConcepto').value=''; $('gImporte').value='';
+  if (mk!==cur){ cur = mk; toast('Gasto añadido a ' + monthName(mk)); } else toast('Gasto añadido');
+  await save(); render();
+});
+function monthName(mk){ const [y,m]=mk.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}); }
+
+function editGasto(id){
+  const g = month().gastos.find(x=>x.id===id); if(!g) return;
+  const cats = ['Casa','Comida','Facturas','Transporte','Ocio','Salud','Compras','Otros'];
+  openModal(`<h3 style="margin-bottom:14px">Editar gasto</h3>
+    <form id="egForm">
+      <div class="field"><label>Concepto</label><input id="egC" required value="${esc(g.concepto)}"></div>
+      <div class="grid2">
+        <div class="field"><label>Importe (€)</label><input id="egI" inputmode="decimal" required value="${String(g.importe).replace('.',',')}"></div>
+        <div class="field"><label>Fecha</label><input id="egF" type="date" required value="${esc(g.fecha)}"></div>
+      </div>
+      <div class="field"><label>Categoría</label><select id="egCat">${cats.map(c=>`<option${c===g.cat?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="row"><button type="button" class="ghost" id="egX">Cancelar</button><button type="submit" style="flex:1">Guardar</button></div>
+    </form>`);
+  $('egX').onclick = closeModal;
+  $('egForm').onsubmit = async e => {
+    e.preventDefault();
+    const imp = parseMoney($('egI').value);
+    if (isNaN(imp)||imp<=0){ toast('Importe no válido'); return; }
+    const fecha = $('egF').value, mk = fecha.slice(0,7);
+    Object.assign(g, {concepto:$('egC').value.trim(), importe:imp, fecha, cat:$('egCat').value});
+    if (mk!==cur){
+      month().gastos = month().gastos.filter(x=>x.id!==id);
+      if (!state.months[mk]) state.months[mk]={nomina:0,gastos:[]};
+      state.months[mk].gastos.push(g);
+    }
+    closeModal(); await save(); render();
+  };
+}
+
+/* ---------- deudas ---------- */
+$('deudaForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const imp = parseMoney($('dImporte').value);
+  if (isNaN(imp)||imp<=0){ toast('Escribe una cantidad válida'); return; }
+  state.deudas.push({id:uid(), nombre:$('dNombre').value.trim(), importe:imp, desc:$('dDesc').value.trim(), fecha:todayISO(), pagada:false});
+  $('dNombre').value=''; $('dImporte').value=''; $('dDesc').value='';
+  await save(); render(); toast('Añadido');
+});
+
+/* ---------- pintar ---------- */
+function render(){
+  if (!state) return;
+  // Mes
+  const m = state.months[cur] || {nomina:0, gastos:[]};
+  const gastado = m.gastos.reduce((s,g)=>s+g.importe,0);
+  const saldo = m.nomina - gastado;
+  $('monthTitle').textContent = monthName(cur);
+  $('saldo').textContent = money(saldo);
+  $('saldo').classList.toggle('neg', saldo<0);
+  $('nominaTxt').textContent = money(m.nomina);
+  $('gastadoTxt').textContent = money(gastado);
+  const pct = m.nomina>0 ? Math.min(100, gastado/m.nomina*100) : (gastado>0?100:0);
+  $('barFill').style.width = pct+'%';
+  $('bar').classList.toggle('over', gastado > m.nomina);
+  $('nominaIn').placeholder = m.nomina>0 ? 'Cambiar nómina (€)' : 'Nómina del mes (€)';
+  $('gFecha').value = defaultDate();
+
+  const gl = $('gastosList');
+  const gs = [...m.gastos].sort((a,b)=> b.fecha.localeCompare(a.fecha));
+  gl.innerHTML = gs.length ? gs.map(g=>`
+    <li class="item">
+      <div class="main">
+        <div class="t">${esc(g.concepto)}</div>
+        <div class="s"><span class="tag">${esc(g.cat||'Otros')}</span>${fmtDate(g.fecha)}</div>
+        <div class="actions"><button class="soft small" data-edit="${g.id}">Editar</button><button class="danger small" data-delg="${g.id}">Borrar</button></div>
+      </div>
+      <div class="num neg">−${money(g.importe)}</div>
+    </li>`).join('') : '<li class="empty">Aún no hay gastos este mes</li>';
+  gl.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editGasto(b.dataset.edit));
+  gl.querySelectorAll('[data-delg]').forEach(b=>b.onclick=async()=>{
+    if(!confirm('¿Borrar este gasto?')) return;
+    month().gastos = month().gastos.filter(x=>x.id!==b.dataset.delg);
+    await save(); render();
+  });
+
+  // Deudas
+  const pend = state.deudas.filter(d=>!d.pagada);
+  const cob = state.deudas.filter(d=>d.pagada);
+  const total = pend.reduce((s,d)=>s+d.importe,0);
+  $('totalDeben').textContent = money(total);
+  $('numDeben').textContent = pend.length ? `${pend.length} ${pend.length===1?'deuda pendiente':'deudas pendientes'}` : 'Nadie te debe nada';
+  const item = d => `
+    <li class="item ${d.pagada?'paid':''}">
+      <div class="main">
+        <div class="t">${esc(d.nombre)}</div>
+        ${d.desc?`<div class="s">${esc(d.desc)}</div>`:''}
+        <div class="s">${fmtDate(d.fecha)}${d.pagada&&d.fechaPago?' · cobrado el '+fmtDate(d.fechaPago):''}</div>
+        <div class="actions">
+          ${d.pagada ? `<button class="soft small" data-undo="${d.id}">Deshacer</button>` : `<button class="small" data-pay="${d.id}">Cobrado</button>`}
+          <button class="danger small" data-deld="${d.id}">Borrar</button>
+        </div>
+      </div>
+      <div class="num ${d.pagada?'':'pos'}">${money(d.importe)}</div>
+    </li>`;
+  $('debenList').innerHTML = pend.length ? pend.sort((a,b)=>b.fecha.localeCompare(a.fecha)).map(item).join('') : '<li class="empty">No hay nada pendiente</li>';
+  $('cobradasList').innerHTML = cob.map(item).join('');
+  $('cobradasWrap').classList.toggle('hidden', !cob.length);
+  $('cobradasSum').textContent = `Cobradas (${cob.length})`;
+  const find = id => state.deudas.find(x=>x.id===id);
+  document.querySelectorAll('[data-pay]').forEach(b=>b.onclick=async()=>{ const d=find(b.dataset.pay); d.pagada=true; d.fechaPago=todayISO(); await save(); render(); toast('Marcado como cobrado'); });
+  document.querySelectorAll('[data-undo]').forEach(b=>b.onclick=async()=>{ const d=find(b.dataset.undo); d.pagada=false; delete d.fechaPago; await save(); render(); });
+  document.querySelectorAll('[data-deld]').forEach(b=>b.onclick=async()=>{ if(!confirm('¿Borrar esta deuda?')) return; state.deudas=state.deudas.filter(x=>x.id!==b.dataset.deld); await save(); render(); });
+}
+
+showLock();
+})();
+</script>
+</body>
+</html>
