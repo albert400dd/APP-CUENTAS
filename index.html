@@ -6,6 +6,10 @@
 <meta name="theme-color" content="#0f766e">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mis Cuentas">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-180.png">
 <title>Mis Cuentas</title>
 <style>
 :root{
@@ -523,6 +527,11 @@ function render(){
 }
 
 showLock();
+
+/* ---------- modo sin conexión ---------- */
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 })();
 </script>
 </body>
