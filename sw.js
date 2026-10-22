@@ -1,6 +1,6 @@
 // Mis Cuentas: guarda la app en el dispositivo para que funcione sin internet.
 // No guarda ni envía tus datos: solo los archivos de la propia app.
-const CACHE = 'miscuentas-app-v1';
+const CACHE = 'miscuentas-app-v2';
 const FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -15,13 +15,13 @@
 :root{
   --bg:#f4f6f5; --card:#ffffff; --text:#14201d; --muted:#5f6f6a; --line:#e2e8e5;
   --accent:#0f766e; --accent-soft:#d9f0ec; --danger:#c2410c; --danger-soft:#fdeadf;
-  --ok:#15803d; --ok-soft:#dcf3e2; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+  --ok:#15803d; --ok-soft:#dcf3e2; --warn:#b45309; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
 }
 @media (prefers-color-scheme: dark){
   :root{
     --bg:#0e1413; --card:#172120; --text:#e8efed; --muted:#93a39e; --line:#26332f;
     --accent:#2dd4bf; --accent-soft:#123a35; --danger:#fb923c; --danger-soft:#3a2216;
-    --ok:#4ade80; --ok-soft:#14321f; --shadow:none;
+    --ok:#4ade80; --ok-soft:#14321f; --warn:#fbbf24; --shadow:none;
   }
 }
 *{box-sizing:border-box}
@@ -53,7 +53,7 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight
 .stats{display:flex;justify-content:space-between;gap:10px;font-size:14px}
 .top{display:flex;align-items:center;justify-content:space-between;margin:4px 0 14px}
 .monthnav{display:flex;align-items:center;gap:4px;margin-bottom:14px;justify-content:center}
-.monthnav h2{min-width:170px;text-align:center;text-transform:capitalize;font-size:19px}
+.monthnav h2{min-width:170px;text-align:center;font-size:19px}
 .monthnav button{width:42px;height:42px;padding:0;font-size:20px}
 .list{list-style:none;margin:0;padding:0}
 .item{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
@@ -79,6 +79,26 @@ label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px;font-weight
 .toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:30;max-width:90vw}
 details summary{cursor:pointer;color:var(--muted);font-weight:600;padding:6px 0}
 .paid .t,.paid .num{text-decoration:line-through;opacity:.6}
+.modal .card{max-height:calc(100vh - 32px);overflow:auto}
+.stats3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:14px}
+.stats3>div:nth-child(2){text-align:center}.stats3>div:nth-child(3){text-align:right}
+.obj{padding:12px 0;border-top:1px solid var(--line)}
+.obj:first-child{border-top:0;padding-top:4px}
+.obj .h{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.obj .h .n{font-weight:600;overflow-wrap:anywhere}
+.obj .bar{margin:8px 0 5px}
+.obj .s{font-size:13px;color:var(--muted)}
+.obj .s.bad{color:var(--danger);font-weight:600}
+.obj .s.good{color:var(--ok);font-weight:600}
+.obj .s.warn{color:var(--warn);font-weight:600}
+.bar.warn>i{background:var(--warn)}
+.bar.goal>i{background:var(--ok)}
+.hint{font-size:13px;color:var(--muted);margin-top:8px}
+.hint.bad{color:var(--danger)}
+.oe{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.oe .row{margin-top:8px}
+.oe select{flex:1}
+.alerta-ico{font-size:40px;line-height:1;margin-bottom:8px}
 </style>
 </head>
 <body>
@@ -121,9 +141,10 @@ details summary{cursor:pointer;color:var(--muted);font-weight:600;padding:6px 0}
         <div class="muted" style="font-size:14px">Saldo disponible</div>
         <div class="big" id="saldo"></div>
         <div class="bar" id="bar"><i id="barFill"></i></div>
-        <div class="stats">
+        <div class="stats3">
           <div><div class="muted">Nómina</div><div class="num" id="nominaTxt"></div></div>
-          <div style="text-align:right"><div class="muted">Gastado</div><div class="num" id="gastadoTxt"></div></div>
+          <div><div class="muted">Gastado</div><div class="num" id="gastadoTxt"></div></div>
+          <div><div class="muted">Ahorrado</div><div class="num" id="ahorradoTxt"></div></div>
         </div>
         <form id="nominaForm" class="row" style="margin-top:14px">
           <input id="nominaIn" inputmode="decimal" placeholder="Nómina del mes (€)">
@@ -132,20 +153,27 @@ details summary{cursor:pointer;color:var(--muted);font-weight:600;padding:6px 0}
       </div>
 
       <div class="card">
-        <h3 style="margin-bottom:12px">Añadir gasto</h3>
+        <div class="row" style="justify-content:space-between;margin-bottom:8px">
+          <h3>Objetivos del mes</h3>
+          <button class="soft small" id="editObj">Editar</button>
+        </div>
+        <div id="objList"></div>
+        <div class="hint" id="objResumen"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:12px">Añadir gasto o ahorro</h3>
         <form id="gastoForm" autocomplete="off">
           <div class="field"><label for="gConcepto">Concepto</label><input id="gConcepto" required placeholder="Ej. Supermercado"></div>
           <div class="grid2">
             <div class="field"><label for="gImporte">Importe (€)</label><input id="gImporte" inputmode="decimal" required placeholder="0,00"></div>
             <div class="field"><label for="gFecha">Fecha</label><input id="gFecha" type="date" required></div>
           </div>
-          <div class="field"><label for="gCat">Categoría</label>
-            <select id="gCat">
-              <option>Casa</option><option>Comida</option><option>Facturas</option><option>Transporte</option>
-              <option>Ocio</option><option>Salud</option><option>Compras</option><option>Otros</option>
-            </select>
+          <div class="field"><label for="gCat">Objetivo</label>
+            <select id="gCat"></select>
+            <div class="hint" id="gCatHint"></div>
           </div>
-          <button type="submit" style="width:100%">Añadir gasto</button>
+          <button type="submit" style="width:100%">Añadir</button>
         </form>
       </div>
 
@@ -209,6 +237,12 @@ let key = null, salt = null, state = null;
 let cur = monthKey(new Date());
 let pendingImport = null;
 let hiddenAt = 0;
+let mesHoy = cur;
+function irAlMesActual(){
+  const ahora = monthKey(new Date());
+  if (ahora !== mesHoy) { mesHoy = ahora; cur = ahora; if (state) render(); }
+}
+setInterval(irAlMesActual, 60*1000);
 
 /* ---------- utilidades ---------- */
 function monthKey(d){ return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0'); }
@@ -255,8 +289,142 @@ function normalize(st){
   st = st && typeof st==='object' ? st : {};
   st.months = st.months || {};
   st.deudas = Array.isArray(st.deudas) ? st.deudas : [];
+  if (!Array.isArray(st.objetivos)) {
+    // Primera vez con objetivos: se crean unos de ejemplo (sin límite) y los gastos antiguos se asignan por su categoría
+    const base = [['Ahorro','ahorro'],['Vivienda','gasto'],['Comida','gasto'],['Facturas','gasto'],['Transporte','gasto'],['Ocio','gasto'],['Salud','gasto'],['Compras','gasto']];
+    st.objetivos = base.map(([nombre,tipo]) => ({id:uid(), nombre, tipo, limite:0}));
+    const porNombre = {};
+    st.objetivos.forEach(o => porNombre[o.nombre.toLowerCase()] = o.id);
+    porNombre['casa'] = porNombre['vivienda'];
+    Object.values(st.months).forEach(m => (m.gastos||[]).forEach(g => {
+      if (!g.obj) { const id = porNombre[String(g.cat||'').toLowerCase()]; if (id) g.obj = id; }
+    }));
+  }
+  Object.values(st.months).forEach(m => { m.gastos = m.gastos || []; m.nomina = m.nomina || 0; });
   return st;
 }
+
+/* ---------- objetivos ---------- */
+const objById = id => state.objetivos.find(o => o.id === id);
+const objsActivos = () => state.objetivos.filter(o => !o.archivado);
+function limiteDe(m, o){ return m.lim && m.lim[o.id] != null ? m.lim[o.id] : (o.limite || 0); }
+function totalObj(m, id){ return m.gastos.filter(g => g.obj === id).reduce((s,g) => s + g.importe, 0); }
+function objsDelMes(m){
+  return state.objetivos.filter(o => {
+    const usado = m.gastos.some(g => g.obj === o.id);
+    return m.lim ? (o.id in m.lim || usado) : (!o.archivado || usado);
+  });
+}
+function nombreGasto(g){ const o = g.obj && objById(g.obj); return o ? o.nombre : (g.cat && g.cat !== 'Otros' && !g.obj ? g.cat : 'Otros'); }
+function esAhorro(g){ const o = g.obj && objById(g.obj); return !!(o && o.tipo === 'ahorro'); }
+// Antes de cambiar objetivos, los meses pasados guardan sus límites para que su historial no cambie
+function congelarPasados(){
+  const ahora = monthKey(new Date());
+  for (const [k, m] of Object.entries(state.months)) {
+    if (k < ahora && !m.lim) { m.lim = {}; state.objetivos.forEach(o => { if (!o.archivado) m.lim[o.id] = o.limite || 0; }); }
+  }
+}
+
+function alerta(icono, titulo, texto){
+  try { navigator.vibrate && navigator.vibrate([120,60,120]); } catch(_){}
+  openModal(`<div class="alerta-ico">${icono}</div><h3 style="margin-bottom:8px">${esc(titulo)}</h3>
+    <p class="muted" style="margin:0 0 16px">${esc(texto)}</p>
+    <button style="width:100%" id="alOk">Entendido</button>`);
+  $('alOk').onclick = closeModal;
+}
+function avisar(o, lim, antes, despues){
+  if (!o || !(lim > 0) || despues === antes) return false;
+  if (o.tipo === 'ahorro') {
+    if (antes < lim && despues >= lim) { alerta('🎉', '¡Objetivo conseguido!', `Has llegado a ${money(lim)} en ${o.nombre} este mes.`); return true; }
+    return false;
+  }
+  if (despues > lim && antes <= lim) alerta('⚠️', `Has superado el límite de ${o.nombre}`, `Llevas ${money(despues)} y tu límite es ${money(lim)}. Te has pasado ${money(despues - lim)}.`);
+  else if (despues === lim && antes < lim) alerta('⚠️', `Has llegado al límite de ${o.nombre}`, `Ya has gastado los ${money(lim)} que tenías para este mes.`);
+  else if (despues > lim) toast(`Sigues por encima del límite de ${o.nombre} (+${money(despues - lim)})`);
+  else if (despues >= lim * 0.8 && antes < lim * 0.8) toast(`Atención: llevas el ${Math.floor(despues / lim * 100)} % de ${o.nombre}. Quedan ${money(lim - despues)}`);
+  else return false;
+  return true;
+}
+
+function editarObjetivos(){
+  let lista = objsActivos().map(o => ({...o}));
+  const pintar = () => {
+    $('oeList').innerHTML = lista.length ? lista.map((o,i) => `
+      <div class="oe">
+        <div class="grid2">
+          <input data-i="${i}" data-f="nombre" placeholder="Nombre (ej. Ocio)" value="${esc(o.nombre)}">
+          <input data-i="${i}" data-f="limite" inputmode="decimal" placeholder="Cantidad €" value="${o.limite ? String(o.limite).replace('.', ',') : ''}">
+        </div>
+        <div class="row">
+          <select data-i="${i}" data-f="tipo">
+            <option value="gasto"${o.tipo !== 'ahorro' ? ' selected' : ''}>Límite de gasto</option>
+            <option value="ahorro"${o.tipo === 'ahorro' ? ' selected' : ''}>Meta de ahorro</option>
+          </select>
+          <button type="button" class="danger small" data-del="${i}">Quitar</button>
+        </div>
+      </div>`).join('') : '<p class="empty">No tienes objetivos. Añade uno.</p>';
+    $('oeList').querySelectorAll('[data-f]').forEach(el => el.oninput = el.onchange = () => { lista[el.dataset.i][el.dataset.f] = el.value; });
+    $('oeList').querySelectorAll('[data-del]').forEach(b => b.onclick = () => { lista.splice(+b.dataset.del, 1); pintar(); });
+    actualizarTotal();
+  };
+  const actualizarTotal = () => {
+    const tot = lista.reduce((s,o) => { const n = parseMoney(o.limite); return s + (isNaN(n) ? 0 : n); }, 0);
+    const nom = (state.months[monthKey(new Date())] || {}).nomina || 0;
+    $('oeTotal').textContent = `Total repartido: ${money(tot)}` + (nom ? ` de ${money(nom)} de nómina` : '');
+    $('oeTotal').classList.toggle('bad', nom > 0 && tot > nom);
+  };
+  openModal(`<h3 style="margin-bottom:6px">Tus objetivos</h3>
+    <p class="muted" style="font-size:14px;margin:0 0 14px">Se aplican a todos los meses y se ponen a cero cada día 1. Deja la cantidad vacía si solo quieres usarlo para clasificar.</p>
+    <div id="oeList"></div>
+    <button type="button" class="soft" id="oeAdd" style="width:100%;margin-bottom:6px">+ Añadir objetivo</button>
+    <div class="hint" id="oeTotal" style="margin-bottom:12px"></div>
+    <div class="err" id="oeErr"></div>
+    <div class="row"><button type="button" class="ghost" id="oeX">Cancelar</button><button type="button" style="flex:1" id="oeOk">Guardar</button></div>`);
+  $('oeList').addEventListener('input', actualizarTotal);
+  $('oeAdd').onclick = () => { lista.push({id:uid(), nombre:'', tipo:'gasto', limite:''}); pintar(); const ins = $('oeList').querySelectorAll('[data-f="nombre"]'); ins[ins.length-1].focus(); };
+  $('oeX').onclick = closeModal;
+  $('oeOk').onclick = async () => {
+    const limpia = [];
+    for (const o of lista) {
+      const nombre = String(o.nombre || '').trim();
+      const lim = String(o.limite ?? '').trim() === '' ? 0 : parseMoney(o.limite);
+      if (!nombre && !lim) continue;
+      if (!nombre) { $('oeErr').textContent = 'Ponle nombre a todos los objetivos.'; return; }
+      if (isNaN(lim) || lim < 0) { $('oeErr').textContent = `La cantidad de «${nombre}» no es válida.`; return; }
+      limpia.push({id:o.id, nombre, tipo:o.tipo === 'ahorro' ? 'ahorro' : 'gasto', limite:lim});
+    }
+    congelarPasados();
+    const nuevos = new Set(limpia.map(o => o.id));
+    const quitados = state.objetivos.filter(o => !nuevos.has(o.id))
+      .filter(o => Object.values(state.months).some(m => m.gastos.some(g => g.obj === o.id)))
+      .map(o => ({...o, archivado:true}));
+    state.objetivos = [...limpia, ...quitados];
+    closeModal(); await save(); render(); toast('Objetivos guardados');
+  };
+  pintar();
+}
+$('editObj').addEventListener('click', editarObjetivos);
+
+function opcionesObjetivos(sel, extra){
+  const lista = objsActivos();
+  if (extra && !lista.includes(extra)) lista.push(extra);
+  return lista.map(o => `<option value="${o.id}"${o.id === sel ? ' selected' : ''}>${esc(o.nombre)}${o.tipo === 'ahorro' ? ' (ahorro)' : ''}</option>`).join('')
+    + `<option value=""${!sel ? ' selected' : ''}>Otros (sin objetivo)</option>`;
+}
+function pintarHint(){
+  const o = objById($('gCat').value), h = $('gCatHint');
+  h.classList.remove('bad');
+  if (!o) { h.textContent = ''; return; }
+  const fecha = $('gFecha').value || defaultDate();
+  const m = state.months[fecha.slice(0,7)] || {gastos:[], nomina:0};
+  const lim = limiteDe(m, o), llevas = totalObj(m, o.id);
+  if (!(lim > 0)) { h.textContent = `${o.nombre}: llevas ${money(llevas)} este mes (sin límite).`; return; }
+  if (o.tipo === 'ahorro') { h.textContent = `${o.nombre}: llevas ${money(llevas)} de ${money(lim)}.`; return; }
+  if (llevas > lim) { h.textContent = `${o.nombre}: te has pasado ${money(llevas - lim)} del límite.`; h.classList.add('bad'); }
+  else h.textContent = `${o.nombre}: llevas ${money(llevas)} de ${money(lim)} · quedan ${money(lim - llevas)}`;
+}
+$('gCat').addEventListener('change', pintarHint);
+$('gFecha').addEventListener('change', pintarHint);
 
 /* ---------- bloqueo ---------- */
 function showLock(){
@@ -297,6 +465,7 @@ $('lockForm').addEventListener('submit', async e => {
       if (pendingImport){ pendingImport = null; await save(); toast('Copia restaurada'); }
     }
     $('lockView').classList.add('hidden'); $('appView').classList.remove('hidden');
+    irAlMesActual();
     render();
   } finally { $('lockBtn').disabled = false; }
 });
@@ -305,6 +474,7 @@ $('lockNow').addEventListener('click', showLock);
 document.addEventListener('visibilitychange', ()=>{
   if (document.hidden) hiddenAt = Date.now();
   else if (key && hiddenAt && Date.now()-hiddenAt > 3*60*1000) showLock(); // se bloquea tras 3 min en segundo plano
+  else irAlMesActual();
 });
 
 /* ---------- copias ---------- */
@@ -415,16 +585,22 @@ $('gastoForm').addEventListener('submit', async e => {
   const fecha = $('gFecha').value || defaultDate();
   const mk = fecha.slice(0,7);
   if (!state.months[mk]) state.months[mk] = {nomina:0, gastos:[]};
-  state.months[mk].gastos.push({id:uid(), concepto:$('gConcepto').value.trim(), importe:imp, fecha, cat:$('gCat').value});
+  const mm = state.months[mk];
+  const o = objById($('gCat').value);
+  const antes = o ? totalObj(mm, o.id) : 0;
+  mm.gastos.push({id:uid(), concepto:$('gConcepto').value.trim(), importe:imp, fecha, obj:o ? o.id : null, cat:o ? o.nombre : 'Otros'});
   $('gConcepto').value=''; $('gImporte').value='';
-  if (mk!==cur){ cur = mk; toast('Gasto añadido a ' + monthName(mk)); } else toast('Gasto añadido');
+  const cambiaMes = mk !== cur;
+  if (cambiaMes) cur = mk;
   await save(); render();
+  const lim = o ? limiteDe(mm, o) : 0;
+  const despues = o ? totalObj(mm, o.id) : 0;
+  if (!avisar(o, lim, antes, despues)) toast(cambiaMes ? 'Añadido a ' + monthName(mk) : 'Añadido');
 });
-function monthName(mk){ const [y,m]=mk.split('-').map(Number); return new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}); }
+function monthName(mk){ const [y,m]=mk.split('-').map(Number); const t = new Date(y,m-1,1).toLocaleDateString('es-ES',{month:'long',year:'numeric'}); return t.charAt(0).toUpperCase()+t.slice(1); }
 
 function editGasto(id){
   const g = month().gastos.find(x=>x.id===id); if(!g) return;
-  const cats = ['Casa','Comida','Facturas','Transporte','Ocio','Salud','Compras','Otros'];
   openModal(`<h3 style="margin-bottom:14px">Editar gasto</h3>
     <form id="egForm">
       <div class="field"><label>Concepto</label><input id="egC" required value="${esc(g.concepto)}"></div>
@@ -432,7 +608,7 @@ function editGasto(id){
         <div class="field"><label>Importe (€)</label><input id="egI" inputmode="decimal" required value="${String(g.importe).replace('.',',')}"></div>
         <div class="field"><label>Fecha</label><input id="egF" type="date" required value="${esc(g.fecha)}"></div>
       </div>
-      <div class="field"><label>Categoría</label><select id="egCat">${cats.map(c=>`<option${c===g.cat?' selected':''}>${c}</option>`).join('')}</select></div>
+      <div class="field"><label>Objetivo</label><select id="egCat">${opcionesObjetivos(g.obj || '', g.obj && objById(g.obj))}</select></div>
       <div class="row"><button type="button" class="ghost" id="egX">Cancelar</button><button type="submit" style="flex:1">Guardar</button></div>
     </form>`);
   $('egX').onclick = closeModal;
@@ -441,13 +617,17 @@ function editGasto(id){
     const imp = parseMoney($('egI').value);
     if (isNaN(imp)||imp<=0){ toast('Importe no válido'); return; }
     const fecha = $('egF').value, mk = fecha.slice(0,7);
-    Object.assign(g, {concepto:$('egC').value.trim(), importe:imp, fecha, cat:$('egCat').value});
+    if (!state.months[mk]) state.months[mk]={nomina:0,gastos:[]};
+    const destino = state.months[mk];
+    const o = objById($('egCat').value);
+    const antes = o ? totalObj(destino, o.id) : 0;
+    Object.assign(g, {concepto:$('egC').value.trim(), importe:imp, fecha, obj:o ? o.id : null, cat:o ? o.nombre : 'Otros'});
     if (mk!==cur){
       month().gastos = month().gastos.filter(x=>x.id!==id);
-      if (!state.months[mk]) state.months[mk]={nomina:0,gastos:[]};
-      state.months[mk].gastos.push(g);
+      destino.gastos.push(g);
     }
     closeModal(); await save(); render();
+    if (o) avisar(o, limiteDe(destino, o), antes, totalObj(destino, o.id));
   };
 }
 
@@ -466,18 +646,49 @@ function render(){
   if (!state) return;
   // Mes
   const m = state.months[cur] || {nomina:0, gastos:[]};
-  const gastado = m.gastos.reduce((s,g)=>s+g.importe,0);
-  const saldo = m.nomina - gastado;
+  const ahorrado = m.gastos.filter(esAhorro).reduce((s,g)=>s+g.importe,0);
+  const gastado = m.gastos.reduce((s,g)=>s+g.importe,0) - ahorrado;
+  const saldo = m.nomina - gastado - ahorrado;
   $('monthTitle').textContent = monthName(cur);
   $('saldo').textContent = money(saldo);
   $('saldo').classList.toggle('neg', saldo<0);
   $('nominaTxt').textContent = money(m.nomina);
   $('gastadoTxt').textContent = money(gastado);
-  const pct = m.nomina>0 ? Math.min(100, gastado/m.nomina*100) : (gastado>0?100:0);
+  $('ahorradoTxt').textContent = money(ahorrado);
+  const usado = gastado + ahorrado;
+  const pct = m.nomina>0 ? Math.min(100, usado/m.nomina*100) : (usado>0?100:0);
   $('barFill').style.width = pct+'%';
-  $('bar').classList.toggle('over', gastado > m.nomina);
+  $('bar').classList.toggle('over', usado > m.nomina);
+
+  // Objetivos del mes
+  const objs = objsDelMes(m).map(o => ({o, lim:limiteDe(m,o), llevas:totalObj(m,o.id)})).filter(x => x.lim > 0 || x.llevas > 0);
+  $('objList').innerHTML = objs.length ? objs.map(({o, lim, llevas}) => {
+    let cls = '', txt = '', scls = '';
+    const p = lim > 0 ? Math.min(100, llevas/lim*100) : 0;
+    if (!(lim > 0)) txt = 'Sin límite definido';
+    else if (o.tipo === 'ahorro') { cls = 'goal'; if (llevas >= lim) { txt = '¡Objetivo conseguido!'; scls = 'good'; } else txt = `Faltan ${money(lim - llevas)}`; }
+    else if (llevas > lim) { cls = 'over'; txt = `Te has pasado ${money(llevas - lim)}`; scls = 'bad'; }
+    else if (llevas === lim) { cls = 'over'; txt = 'Has llegado al límite'; scls = 'bad'; }
+    else if (llevas >= lim*0.8) { cls = 'warn'; txt = `Quedan ${money(lim - llevas)}`; scls = 'warn'; }
+    else txt = `Quedan ${money(lim - llevas)}`;
+    return `<div class="obj">
+      <div class="h"><span class="n">${esc(o.nombre)}${o.tipo==='ahorro'?' <span class="tag">ahorro</span>':''}</span>
+        <span class="num">${money(llevas)}${lim>0?` <span class="muted" style="font-weight:500">/ ${money(lim)}</span>`:''}</span></div>
+      ${lim>0?`<div class="bar ${cls}"><i style="width:${p}%"></i></div>`:''}
+      <div class="s ${scls}">${txt}</div>
+    </div>`;
+  }).join('') : '<p class="empty" style="padding-top:6px">Aún no tienes límites. Pulsa <b>Editar</b> para decidir cuánto quieres gastar y ahorrar en cada cosa.</p>';
+  const repartido = objs.reduce((s,x)=>s+x.lim,0);
+  const r = $('objResumen'); r.classList.remove('bad');
+  if (repartido > 0 && m.nomina > 0) {
+    if (repartido > m.nomina) { r.textContent = `Tus objetivos suman ${money(repartido)}, ${money(repartido - m.nomina)} más que la nómina.`; r.classList.add('bad'); }
+    else r.textContent = `Repartido ${money(repartido)} de la nómina · sin asignar ${money(m.nomina - repartido)}`;
+  } else r.textContent = '';
   $('nominaIn').placeholder = m.nomina>0 ? 'Cambiar nómina (€)' : 'Nómina del mes (€)';
   $('gFecha').value = defaultDate();
+  const selPrev = $('gCat').value;
+  $('gCat').innerHTML = opcionesObjetivos(objById(selPrev) && !objById(selPrev).archivado ? selPrev : (objsActivos().find(o=>o.tipo!=='ahorro')||{}).id || '');
+  pintarHint();
 
   const gl = $('gastosList');
   const gs = [...m.gastos].sort((a,b)=> b.fecha.localeCompare(a.fecha));
@@ -485,10 +696,10 @@ function render(){
     <li class="item">
       <div class="main">
         <div class="t">${esc(g.concepto)}</div>
-        <div class="s"><span class="tag">${esc(g.cat||'Otros')}</span>${fmtDate(g.fecha)}</div>
+        <div class="s"><span class="tag">${esc(nombreGasto(g))}</span>${fmtDate(g.fecha)}</div>
         <div class="actions"><button class="soft small" data-edit="${g.id}">Editar</button><button class="danger small" data-delg="${g.id}">Borrar</button></div>
       </div>
-      <div class="num neg">−${money(g.importe)}</div>
+      <div class="num ${esAhorro(g)?'pos':'neg'}">${esAhorro(g)?'':'−'}${money(g.importe)}</div>
     </li>`).join('') : '<li class="empty">Aún no hay gastos este mes</li>';
   gl.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>editGasto(b.dataset.edit));
   gl.querySelectorAll('[data-delg]').forEach(b=>b.onclick=async()=>{
